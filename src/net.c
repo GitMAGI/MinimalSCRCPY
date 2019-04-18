@@ -74,6 +74,14 @@ net_listen(uint32_t addr, uint16_t port, int backlog) {
         return INVALID_SOCKET;
     }
 
+    //Log listening on port and ip
+    struct sockaddr_in serv_addr_;
+    socklen_t serv_addr_len_ = sizeof(struct sockaddr_in);
+    getsockname(sock, (struct sockaddr *)&serv_addr_, &serv_addr_len_);
+    char *serv_ip = inet_ntoa(serv_addr_.sin_addr);
+    uint16_t serv_port = htons (serv_addr_.sin_port);
+    infoLog("Host listening on %s:%d", serv_ip, serv_port);
+
     return sock;
 }
 
@@ -81,7 +89,21 @@ socket_t
 net_accept(socket_t server_socket) {
     SOCKADDR_IN csin;
     socklen_t sinsize = sizeof(csin);
-    return accept(server_socket, (SOCKADDR *) &csin, &sinsize);
+    SOCKET socket = accept(server_socket, (SOCKADDR *) &csin, &sinsize);
+    if(socket == INVALID_SOCKET){
+        criticalLog("Accepting Connection failed");        
+        return socket;
+    }
+
+    //Log Accepted remote ip and port
+    struct sockaddr_in clnt_addr_;
+    socklen_t clnt_addr_len_ = sizeof(struct sockaddr_in);
+    getsockname(socket, (struct sockaddr *)&clnt_addr_, &clnt_addr_len_);
+    char *clnt_ip = inet_ntoa(clnt_addr_.sin_addr);
+    uint16_t clnt_port = htons (clnt_addr_.sin_port);
+    infoLog("Accepted %s remote host on port %d", clnt_ip, clnt_port);
+
+    return socket;
 }
 
 ssize_t

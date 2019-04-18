@@ -34,6 +34,8 @@ cmd_execute(const char *path, const char *const argv[], HANDLE *handle) {
         return PROCESS_ERROR_GENERIC;
     }
 
+    debugLog(cmd);
+
     wchar_t *wide = utf8_to_wide_char(cmd);
     if (!wide) {
         criticalLog("Cannot allocate wide char string");

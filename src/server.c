@@ -168,6 +168,8 @@ close_socket(socket_t *socket) {
 void
 server_init(struct server *server) {
     *server = (struct server) SERVER_INITIALIZER;
+    if(!net_init())
+        criticalLog("Initialization failed");
 }
 
 bool
@@ -233,8 +235,7 @@ server_connect_to(struct server *server) {
     } else {
         uint32_t attempts = 100;
         uint32_t delay = 100; // ms
-        server->device_socket = connect_to_server(server->local_port, attempts,
-                                                  delay);
+        server->device_socket = connect_to_server(server->local_port, attempts, delay);
     }
 
     if (server->device_socket == INVALID_SOCKET) {
@@ -276,4 +277,6 @@ server_destroy(struct server *server) {
     if (server->device_socket != INVALID_SOCKET) {
         close_socket(&server->device_socket);
     }
+
+    net_cleanup();
 }
