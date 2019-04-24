@@ -39,18 +39,52 @@ int main(int argc, char* argv[]){
         criticalLog("Server Starting failed");
         goto end;
     }
-    debugLog("Server Started");
- 
-    /*
-    uint16_t delay = 10; 
-    char *buf = (char*) malloc(sizeof(char) * 512);
+    debugLog("Server Started");   
 
     socket_t srvr_sckt = server_connect_to(&srvr);
     if(srvr_sckt == INVALID_SOCKET){
         criticalLog("Unable to correctly connect to the server");
         goto end;
     }
-    // Loop recv sul socket srvr_sckt
+
+    // 1st Packet of 64 B is the Device name (NUL terminating string)
+    // 2nd Packet of 2 B unisigned big endian is the width of the device
+    // 3rd Packet of 2 B unisigned big endian is the height of the device
+    // Next packages (size of 512) are the H.264 stream
+ 
+    char *buf = (char*) malloc(sizeof(char) * 512);
+    ssize_t size = 0;
+    uint16_t delay = 2; 
+
+    size = net_recv(srvr_sckt, buf, 64);
+    if(size<=0){
+        criticalLog("Socket Devece Name failed");
+        goto end;
+    }
+    char *deviceName = (char*) malloc(sizeof(char)*size);
+    memcpy(deviceName, buf, size);
+    debugLog("Device Name: %s", deviceName);
+
+    size = net_recv(srvr_sckt, buf, 2);
+    if(size<=0){
+        criticalLog("Socket Devece Screen Width failed");
+        goto end;
+    }
+    uint16_t screenWidth = 0;
+    memcpy(&screenWidth, buf, size);
+    screenWidth = __builtin_bswap16(screenWidth);
+    debugLog("Device Screen Width: %d", screenWidth);
+
+    size = net_recv(srvr_sckt, buf, 2);
+    if(size<=0){
+        criticalLog("Socket Devece Screen Height failed");
+        goto end;
+    }
+    uint16_t screenHeight = 0;
+    memcpy(&screenHeight, buf, size);
+    screenHeight = __builtin_bswap16(screenHeight);
+    debugLog("Device Screen Height: %d", screenHeight);
+
     int fake = 0;
     do
     { 
@@ -69,18 +103,19 @@ int main(int argc, char* argv[]){
         fake++;
     }
     while(fake < 100); 
-    */
 
-   uint32_t counter = 0;
-   uint16_t delay = 10; 
-   do{
-       #if defined _WIN64 || defined _WIN32
+    /*
+    uint32_t counter = 0;
+    uint16_t delay = 10; 
+    do{
+        #if defined _WIN64 || defined _WIN32
             Sleep(delay);
         #else
             Sleep(delay);
         #endif
-       counter++;
-   }while(counter < 10000);
+        counter++;
+    }while(counter < 10000);
+    */
 
     debugLog("Server Stopping ...");
     server_stop(&srvr);
